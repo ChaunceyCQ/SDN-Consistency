@@ -1,0 +1,229 @@
+#!/bin/bash
+#topo:
+#  h1----->1----->2----->3----->4---->5----->h2
+#                          \                        /
+#                           6---------------->7
+#
+#
+#
+
+
+#update flowtable
+
+#add flow to s6
+curl -X POST -d '{
+    "dpid": 6,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":1,
+        "dl_dst":"00:00:00:00:00:02"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 2
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/add
+
+ curl -X POST -d '{
+    "dpid": 6,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":2,
+        "dl_dst":"00:00:00:00:00:01"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 1
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/add
+
+
+#add flow to s7
+curl -X POST -d '{
+    "dpid": 7,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":1,
+        "dl_dst":"00:00:00:00:00:02"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 2
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/add
+
+ curl -X POST -d '{
+    "dpid": 7,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":2,
+        "dl_dst":"00:00:00:00:00:01"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 1
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/add
+
+#update s2 set flow from2->3 to 2->6
+curl -X POST -d '{
+    "dpid":2,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "dl_dst":"00:00:00:00:00:02",
+        "in_port":1
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port":3
+        }
+    ]
+}'  http://localhost:8080/stats/flowentry/modify_strict
+
+ curl -X POST -d '{
+    "dpid": 2,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":3,
+        "dl_dst":"00:00:00:00:00:01"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 1
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/add
+
+curl -X POST -d '{
+    "dpid":2,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "in_port":2,
+        "dl_dst":"00:00:00:00:00:01"
+    }
+}' http://localhost:8080/stats/flowentry/delete_strict
+
+#update s5 set flow from 4->5 to 7->5
+#add s5 flowtable 7->5
+curl -X POST -d '{
+    "dpid": 5,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":3,
+        "dl_dst":"00:00:00:00:00:02"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 2
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/add
+
+curl -X POST -d '{
+    "dpid": 5,
+    "cookie": 0,
+    "priority":1,
+    "match":{
+        "in_port":2,
+        "dl_dst":"00:00:00:00:00:01"
+    },
+    "actions":[
+        {
+            "type":"OUTPUT",
+            "port": 3
+        }
+    ]
+ }' http://localhost:8080/stats/flowentry/modify_strict
+
+#delete s5 flowtabel 4->5
+curl -X POST -d '{
+    "dpid":5,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "in_port":1,
+        "dl_dst":"00:00:00:00:00:02"
+    }
+}' http://localhost:8080/stats/flowentry/delete_strict
+
+#delete s3 flowtable
+curl -X POST -d '{
+    "dpid":3,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "in_port":1,
+        "dl_dst":"00:00:00:00:00:02"
+    }
+}' http://localhost:8080/stats/flowentry/delete_strict
+
+curl -X POST -d '{
+    "dpid":3,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "in_port":2,
+        "dl_dst":"00:00:00:00:00:01"
+    }
+}' http://localhost:8080/stats/flowentry/delete_strict
+
+#delete s4 flowtable
+curl -X POST -d '{
+    "dpid":4,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "in_port":1,
+        "dl_dst":"00:00:00:00:00:02"
+    }
+}' http://localhost:8080/stats/flowentry/delete_strict
+
+curl -X POST -d '{
+    "dpid":4,
+    "cookie":0,
+    "priority":1,
+    "flags":0,
+    "match":{
+        "in_port":2,
+        "dl_dst":"00:00:00:00:00:01"
+    }
+}' http://localhost:8080/stats/flowentry/delete_strict
+
+#example
+# curl -X POST -d '{
+#     "dpid":1,
+#     "cookie":0,
+#     "priority":1,
+#     "flags":0,
+#     "match":{
+#         "in_port":1,
+#         "dl_dst":"00:00:00:00:00:02"
+#     }
+# }' http://localhost:8080/stats/flowentry/delete_strict
+
+
